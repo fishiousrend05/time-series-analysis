@@ -12,7 +12,7 @@ df_merged.parquet: The cleaned, merged, and memory-optimized dataset.
 
 README.md: Project documentation.
 
-⚙️ Workflow
+Workflow
 Data Preprocessing & EDA: Handled missing values, filtered out closed days (Open = 0), and applied log1p transformation to the target variable (Sales) to stabilize variance.
 
 Feature Engineering: Extracted time-based features (cyclical encoding), lag features (lag_7, lag_14, lag_365), rolling statistics (mean/std), and external factors (Promos, Holidays).
