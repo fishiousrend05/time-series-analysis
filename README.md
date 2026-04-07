@@ -1,4 +1,5 @@
 📈 Rossmann Store Sales Forecasting (Time Series Analysis)
+
 📌 Overview
 This project applies Time Series Analysis and Machine Learning to forecast daily sales for the Rossmann drugstore chain. It covers an end-to-end data pipeline, including Exploratory Data Analysis (EDA), Feature Engineering, predictive modeling, and model interpretability.
 
