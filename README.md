@@ -1,9 +1,9 @@
-📈 Rossmann Store Sales Forecasting (Time Series Analysis)
+Rossmann Store Sales Forecasting (Time Series Analysis)
 
-📌 Overview
+Overview
 This project applies Time Series Analysis and Machine Learning to forecast daily sales for the Rossmann drugstore chain. It covers an end-to-end data pipeline, including Exploratory Data Analysis (EDA), Feature Engineering, predictive modeling, and model interpretability.
 
-📁 Repository Structure
+Repository Structure
 TimeSeriAnalysis.ipynb: The main Jupyter Notebook containing all the code for data processing, EDA, modeling, and evaluation.
 
 train.csv, test.csv, store.csv: Raw datasets (Kaggle).
@@ -25,15 +25,16 @@ XGBoost: The main predictive model.
 
 Model Interpretability: Utilized SHAP (SHapley Additive exPlanations) to explain the XGBoost model's predictions and extract business insights.
 
-🏆 Key Results
+ Key Results
 Performance: The XGBoost model (with target normalization and log transform) achieved the best performance with an RMSPE of ~0.143 on the validation set, improving the baseline by 12.8%.
 
 Business Insights: SHAP analysis revealed that Promo is the strongest sales driver. Additionally, purchasing behavior is heavily influenced by the day of the week (DayOfWeek) and short-term historical momentum (lag and rolling features).
 
-🚀 How to Run
+ How to Run
 1. Install dependencies:
 
 Bash
 pip install pandas numpy scikit-learn xgboost prophet shap matplotlib seaborn pyarrow
+
 2. Execute the notebook:
 Open TimeSeriAnalysis.ipynb in Jupyter Notebook / Jupyter Lab and run all cells sequentially.
