@@ -6,15 +6,15 @@ End-to-end time series forecasting pipeline for 1,115 Rossmann drugstores across
 
 ## Preview
 
-![Prediction vs Actual](assets/prediction_vs_actual.png)
+![Prediction vs Actual](prediction_vs_actual.png)
 
-![SHAP Summary](assets/shap_summary.png)
+![SHAP Summary](shap_summary.png)
 
-![QQ Plot](assets/qq_plot.png)
+![QQ Plot](qq_plot.png)
 
 ---
 
-# 📊 Key Results
+# Key Results
 
 | Model | RMSPE | Notes |
 |---|---|---|
@@ -22,71 +22,64 @@ End-to-end time series forecasting pipeline for 1,115 Rossmann drugstores across
 | Facebook Prophet | 0.29 – 1.8+ | Per-store, high variance |
 | XGBoost | 0.143 | Best — store-level normalization + log transform |
 
-✅ **12.8% improvement over Ridge baseline**
+**12.8% improvement over Ridge baseline**
 
 ---
 
-# 🗂️ Repository Structure
+# Repository Structure
 
 ```text
 rossmann-forecasting/
-├── TimeSeriAnalysis.ipynb
-├── train.csv
-├── test.csv
-├── store.csv
-├── df_merged.parquet
+├── TimeSeriAnalysis.ipynb   # Main notebook: EDA → Feature Eng → Modeling → SHAP
+├── train.csv                # Raw training data (Kaggle)
+├── test.csv                 # Raw test data (Kaggle)
+├── store.csv                # Store metadata
+├── df_merged.parquet        # Cleaned, merged, memory-optimized dataset
 └── README.md
 ```
 
 ---
 
-# 🔄 Pipeline Overview
+# Pipeline Overview
 
 ```text
 Raw CSV (train + store)
         ↓
-Data Cleaning & Merging
-- Filter closed days (Open = 0)
-- Memory optimization (dtype casting)
-- Export → df_merged.parquet
-
+   Data Cleaning & Merging
+   - Filter closed days (Open = 0)
+   - Memory optimization (dtype casting)
+   - Export → df_merged.parquet
         ↓
-
-Feature Engineering
-- Time features (cyclical encoding)
-- Lag features (lag_7, lag_14, lag_28, lag_365)
-- Rolling statistics (mean/std, 7–56 days)
-- Holiday proximity
-- Promo interaction features
-
+   Feature Engineering
+   - Time features (cyclical encoding)
+   - Lag features (lag_7, lag_14, lag_28, lag_365)
+   - Rolling statistics (mean/std, 7–56 days)
+   - Holiday proximity (DaysBeforeHoliday, DaysAfterHoliday)
+   - Promo interaction features
         ↓
-
-Modeling
-- Ridge Regression
-- Facebook Prophet
-- XGBoost
-
+   Modeling
+   - Ridge Regression (baseline)
+   - Facebook Prophet (per-store trend analysis)
+   - XGBoost (main model)
         ↓
-
-Interpretability & Evaluation
-- SHAP Summary Plot
-- Residual Analysis + QQ Plot
-- Interactive Plotly visualization
+   Interpretability & Evaluation
+   - SHAP Summary Plot
+   - Residual Analysis + QQ Plot
+   - Interactive Plotly visualization
 ```
 
 ---
 
-# ⚙️ Feature Engineering
+# Feature Engineering
 
 ## Time Features
 
 | Feature | Description |
 |---|---|
-| DayOfWeek_sin/cos | Cyclical encoding for weekdays |
+| DayOfWeek_sin/cos | Cyclical encoding — preserves circular nature of weekdays |
 | Month_sin/cos | Cyclical encoding for months |
-| IsWeekend | Weekend indicator |
-| IsMonthStart / End | Month boundary flags |
-| DaysBeforeHoliday | Distance to nearest holiday |
+| IsWeekend, IsMonthStart, IsMonthEnd | Binary boundary flags |
+| DaysBeforeHoliday, DaysAfterHoliday | Distance to nearest state holiday |
 
 ---
 
@@ -97,7 +90,7 @@ Interpretability & Evaluation
 | lag_7 / 14 / 28 / 365 | Historical sales intervals |
 | rolling_mean_7/28/56 | Trend signals |
 | rolling_std_7/28/56 | Volatility signals |
-| Sales_ExpandingMean | Store-level cumulative average |
+| Sales_ExpandingMean | Store-level baseline (cumulative average) |
 
 ---
 
@@ -112,7 +105,7 @@ Interpretability & Evaluation
 
 ---
 
-# 🤖 Modeling
+# Modeling
 
 ## Ridge Regression — Baseline
 
@@ -168,98 +161,66 @@ Result:
 
 ---
 
-# 🔍 SHAP Interpretability
+# SHAP Interpretability
 
-![SHAP Summary](assets/shap_summary.png)
+![SHAP Summary](shap_summary.png)
 
 ## Business Insights
 
 ### 1. Promo — The #1 Sales Driver
 
-Promotions show the strongest positive SHAP impact across the dataset.
-
-Days with active promotions consistently push predictions upward, making promotion timing the highest-ROI controllable variable.
+SHAP values show a strong, clean split: days with active promotions (high feature value) cluster heavily on the positive side, while non-promo days drag sales below average. Promotion timing has the highest ROI for intervention of any controllable variable in the dataset.
 
 ---
 
 ### 2. DayOfWeek — Hidden Complexity
 
-High weekday values (Fri/Sat/Sun) appear on both positive and negative SHAP ranges.
-
-This reveals operational differences between stores, especially Sunday closures.
+Ranked #2 by mean |SHAP|, but with surprising distribution: high day-of-week values (Friday, Saturday, Sunday) appear both far-right and far-left on the SHAP axis. This reveals a subset of stores that close on Sundays — pulling those days to strong negative SHAP values despite a "high" weekday number. Segment-level analysis per store type is needed before acting on this signal.
 
 ---
 
-### 3. Short-term Momentum
+### 3. Short-term Momentum (rolling_mean_7, lag_7/14)
 
-Features such as:
-- rolling_mean_7
-- lag_7
-- lag_14
-
-show strong predictive power for near-term forecasting.
+Lag and rolling features contribute consistently positive SHAP values when recent sales are high. The model has learned that sales momentum carries forward week-over-week — making these features reliable inputs for near-term forecasting horizons.
 
 ---
 
 ### 4. Promo × Time Interaction
 
-Month-end promotions generate amplified positive effects.
-
-This suggests promotion scheduling near month boundaries increases impact.
-
+Month-end and promo-month features show directional SHAP values aligned with intuition: falling in a promotion month or at month-end adds positive expected lift. This confirms that promo scheduling at month boundaries amplifies impact.
 ---
 
 ### 5. Low-signal Features
 
-Features with minimal SHAP contribution:
-- StoreType
-- SchoolHoliday
-- CompetitionDistance
-
-The model largely ignores these directly.
+'StoreType', 'SchoolHoliday', and 'CompetitionDistance' show near-zero SHAP values with scattered distributions — the model largely ignores these for prediction. Their importance may be captured indirectly through lag and rolling features.
 
 ---
 
 # 📉 Residual Analysis
 
-![QQ Plot](assets/qq_plot.png)
+![QQ Plot](qq_plot.png)
 
 ## QQ Plot Findings
 
 ### Mid-range Quantiles
 
-Predictions closely follow the diagonal line.
-
-→ Strong performance on normal trading days.
+Points track the diagonal tightly — the model forecasts normal sales days with high accuracy and well-distributed errors.
 
 ---
 
 ### Right Tail
 
-The model under-predicts extreme sales spikes.
-
-Likely causes:
-- Log-transform smoothing
-- Missing event-specific features
-
+Points diverge sharply upward — the model under-predicts sales spikes. On exceptional revenue days, the log-transform and lack of spike-specific features cause the model to be overly conservative.
 ---
 
 ### Left Tail
 
-Minor over-prediction on very slow days.
-
-Magnitude is much smaller than right-tail error.
-
+Slight downward drift — minor over-prediction on extremely slow days, much smaller in magnitude than right-tail errors.
 ---
 
 ## Key Implication
 
-XGBoost performs strongly on typical business conditions but struggles with Black Friday-style spikes.
-
-Potential solution:
-- Spike detector
-- Hybrid ensemble model
-
+XGBoost performs well on typical trading days but misses Black Friday-style peaks. A spike detector or hybrid ensemble could address this in future iterations.
 ---
 
 # 🏁 Model Comparison Summary
@@ -271,9 +232,11 @@ Potential solution:
 | Stability | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ |
 | Use Case | Baseline | Behavior Analysis | Production Forecasting |
 
+No single model dominates all dimensions. Ridge provides a reliable reference point. Prophet excels at decomposing and explaining seasonal behavior. XGBoost is the clear choice for production forecasting accuracy.
+
 ---
 
-# 🚀 How to Run
+# How to Run
 
 ## 1. Install Dependencies
 
@@ -316,18 +279,9 @@ during preprocessing.
 
 ---
 
-# 📌 Screenshots
-
-```text
-shap_summary.png
-qq_plot.png
-prediction_vs_actual.png
-feature_importance.png
-```
-
 ---
 
-# 🔮 Future Improvements
+# Future Improvements
 
 - Spike modeling using external event calendars
 - LightGBM / CatBoost benchmarking
@@ -336,7 +290,7 @@ feature_importance.png
 
 ---
 
-# 📚 Dataset
+# Dataset
 
 **Rossmann Store Sales — Kaggle Competition**
 
