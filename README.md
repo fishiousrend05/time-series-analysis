@@ -188,6 +188,7 @@ Lag and rolling features contribute consistently positive SHAP values when recen
 ### 4. Promo × Time Interaction
 
 Month-end and promo-month features show directional SHAP values aligned with intuition: falling in a promotion month or at month-end adds positive expected lift. This confirms that promo scheduling at month boundaries amplifies impact.
+
 ---
 
 ### 5. Low-signal Features
@@ -196,7 +197,7 @@ Month-end and promo-month features show directional SHAP values aligned with int
 
 ---
 
-# 📉 Residual Analysis
+# Residual Analysis
 
 ![QQ Plot](qq_plot.png)
 
@@ -223,7 +224,7 @@ Slight downward drift — minor over-prediction on extremely slow days, much sma
 XGBoost performs well on typical trading days but misses Black Friday-style peaks. A spike detector or hybrid ensemble could address this in future iterations.
 ---
 
-# 🏁 Model Comparison Summary
+# Model Comparison Summary
 
 | Dimension | Ridge | Prophet | XGBoost |
 |---|---|---|---|
